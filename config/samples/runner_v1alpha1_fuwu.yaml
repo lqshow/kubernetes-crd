@@ -1,0 +1,7 @@
+apiVersion: runner.basebit.me/v1alpha1
+kind: Fuwu
+metadata:
+  name: fuwu-sample
+spec:
+  # Add fields here
+  foo: bar

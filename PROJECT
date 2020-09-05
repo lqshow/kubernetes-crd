@@ -4,4 +4,7 @@ resources:
 - group: runner
   kind: App
   version: v1alpha1
+- group: runner
+  kind: Fuwu
+  version: v1alpha1
 version: "2"

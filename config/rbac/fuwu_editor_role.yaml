@@ -1,0 +1,24 @@
+# permissions for end users to edit fuwus.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fuwu-editor-role
+rules:
+- apiGroups:
+  - runner.basebit.me
+  resources:
+  - fuwus
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - runner.basebit.me
+  resources:
+  - fuwus/status
+  verbs:
+  - get
