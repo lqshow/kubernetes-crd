@@ -1,3 +1,7 @@
-domain: runner.basebit.me
+domain: basebit.me
 repo: github.com/lqshow/kubernetes-crd
+resources:
+- group: runner
+  kind: App
+  version: v1alpha1
 version: "2"
