@@ -1,0 +1,3 @@
+domain: runner.basebit.me
+repo: github.com/lqshow/kubernetes-crd
+version: "2"
