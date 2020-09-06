@@ -28,8 +28,8 @@ type FuwuSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Fuwu. Edit Fuwu_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 // FuwuStatus defines the observed state of Fuwu
