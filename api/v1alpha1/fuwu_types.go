@@ -36,8 +36,11 @@ type FuwuSpec struct {
 type FuwuStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	Status string `json:"status"`
 }
 
+// +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
 
 // Fuwu is the Schema for the fuwus API
@@ -49,6 +52,7 @@ type Fuwu struct {
 	Status FuwuStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
 
 // FuwuList contains a list of Fuwu

@@ -18,8 +18,9 @@ package controllers
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/prometheus/common/log"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,10 +39,31 @@ type FuwuReconciler struct {
 // +kubebuilder:rbac:groups=runner.basebit.me,resources=fuwus/status,verbs=get;update;patch
 
 func (r *FuwuReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
+	ctx := context.Background()
 	_ = r.Log.WithValues("fuwu", req.NamespacedName)
 
 	// your logic here
+	fuwu := &runnerv1alpha1.Fuwu{}
+	fuwu.ObjectMeta.Finalizers = append(fuwu.ObjectMeta.Finalizers, "fuwu.runner.basebit.me")
+
+	// Get fuwu
+	if err := r.Get(ctx, req.NamespacedName, fuwu); err != nil {
+		fmt.Println(err, "unable to fetch fuwu")
+	} else {
+		fmt.Println(fuwu.Spec.Name, fuwu.Spec.Description)
+	}
+
+	// Update fuwu
+	fuwu.Status.Status = "Running"
+	if err := r.Status().Update(ctx, fuwu); err != nil {
+		log.Error(err, "unable to update fuwu status")
+	}
+
+	// Delete fuwu
+	//time.Sleep(time.Second * 10)
+	//if err := r.Delete(ctx, fuwu); err != nil {
+	//	log.Error(err, "unable to delete fuwu", "fuwu", fuwu)
+	//}
 
 	return ctrl.Result{}, nil
 }
