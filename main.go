@@ -54,6 +54,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
+	setupLog.Info("setting up manager")
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
@@ -66,6 +67,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 将 Manager 的 Client 传给 Controller，并且调用 SetupWithManager 方法传入 Manager 进行 Controller 的初始化
+	setupLog.Info("init app reconciler（Controller）")
 	if err = (&controllers.AppReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("App"),
@@ -74,6 +77,8 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "App")
 		os.Exit(1)
 	}
+
+	setupLog.Info("init fuwu reconciler（Controller）")
 	if err = (&controllers.FuwuReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Fuwu"),
@@ -82,10 +87,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Fuwu")
 		os.Exit(1)
 	}
-	if err = (&runnerv1alpha1.Fuwu{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Fuwu")
-		os.Exit(1)
-	}
+	//if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	//	if err = (&runnerv1alpha1.Fuwu{}).SetupWebhookWithManager(mgr); err != nil {
+	//		setupLog.Error(err, "unable to create webhook", "webhook", "Fuwu")
+	//		os.Exit(1)
+	//	}
+	//}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
