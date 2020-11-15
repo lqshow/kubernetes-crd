@@ -36,8 +36,11 @@ type AppSpec struct {
 type AppStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	Status string `json:"status"`
 }
 
+// +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
 
 // App is the Schema for the apps API
@@ -49,6 +52,7 @@ type App struct {
 	Status AppStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
 
 // AppList contains a list of App

@@ -8,6 +8,15 @@ metadata:
   creationTimestamp: null
   name: fuwus.runner.basebit.me
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.description
+    description: The description of Fuwu
+    name: Description
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    description: The age of Fuwu
+    name: Age
+    type: date
   group: runner.basebit.me
   names:
     kind: Fuwu
@@ -40,9 +49,12 @@ spec:
               type: string
             name:
               type: string
+            selector:
+              type: string
           required:
           - description
           - name
+          - selector
           type: object
         status:
           description: FuwuStatus defines the observed state of Fuwu

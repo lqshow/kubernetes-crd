@@ -18,14 +18,13 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/prometheus/common/log"
+	"github.com/lqshow/kubernetes-crd/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	runnerv1alpha1 "github.com/lqshow/kubernetes-crd/api/v1alpha1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // FuwuReconciler reconciles a Fuwu object
@@ -40,29 +39,43 @@ type FuwuReconciler struct {
 
 func (r *FuwuReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	_ = r.Log.WithValues("fuwu", req.NamespacedName)
+	instanceLog := r.Log.WithValues("fuwu", req.NamespacedName)
 
 	// your logic here
-	fuwu := &runnerv1alpha1.Fuwu{}
-	fuwu.ObjectMeta.Finalizers = append(fuwu.ObjectMeta.Finalizers, "fuwu.runner.basebit.me")
+	instance := &runnerv1alpha1.Fuwu{}
 
-	// Get fuwu
-	if err := r.Get(ctx, req.NamespacedName, fuwu); err != nil {
-		fmt.Println(err, "unable to fetch fuwu")
+	// Get fuwu instance
+	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
+		instanceLog.Error(err, "unable to fetch fuwu")
 	} else {
-		fmt.Println(fuwu.Spec.Name, fuwu.Spec.Description)
+		instanceLog.Info(instance.Spec.Name, instance.Spec.Description, instance.Status)
 	}
 
-	// Update fuwu
-	fuwu.Status.Status = "Running"
-	if err := r.Status().Update(ctx, fuwu); err != nil {
-		log.Error(err, "unable to update fuwu status")
+	// updating fuwu status
+	if instance.Status.Status == "" {
+		instance.Status.Status = "Running"
+		if err := r.Status().Update(ctx, instance); err != nil {
+			instanceLog.Error(err, "unable to update fuwu status")
+		}
+	}
+
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		finalizerName := "fuwu.runner.basebit.me"
+		if !util.InStringArray(instance.ObjectMeta.Finalizers, finalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, finalizerName)
+			if err := r.Update(ctx, instance); err != nil {
+				instanceLog.Error(err, "unable to update fuwu")
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// TODO
 	}
 
 	// Delete fuwu
 	//time.Sleep(time.Second * 10)
-	//if err := r.Delete(ctx, fuwu); err != nil {
-	//	log.Error(err, "unable to delete fuwu", "fuwu", fuwu)
+	//if err := r.Delete(ctx, instance); err != nil {
+	//	log.Error(err, "unable to delete fuwu", "fuwu", instance)
 	//}
 
 	return ctrl.Result{}, nil

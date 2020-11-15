@@ -30,6 +30,7 @@ type FuwuSpec struct {
 
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Selector    string `json:"selector"`
 }
 
 // FuwuStatus defines the observed state of Fuwu
@@ -42,6 +43,8 @@ type FuwuStatus struct {
 
 // +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
+// +kubebuilder:printcolumn:name="Description",type="string",JSONPath=".spec.description",description="The description of Fuwu"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="The age of Fuwu"
 
 // Fuwu is the Schema for the fuwus API
 type Fuwu struct {

@@ -21,10 +21,11 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	runnerv1alpha1 "github.com/lqshow/kubernetes-crd/api/v1alpha1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // AppReconciler reconciles a App object
@@ -38,10 +39,28 @@ type AppReconciler struct {
 // +kubebuilder:rbac:groups=runner.basebit.me,resources=apps/status,verbs=get;update;patch
 
 func (r *AppReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("app", req.NamespacedName)
+	ctx := context.Background()
+	instanceLog := r.Log.WithValues("app", req.NamespacedName)
 
 	// your logic here
+	instance := &runnerv1alpha1.App{}
+	instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, "app.runner.basebit.me")
+
+	// Get app instance
+	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
+		instanceLog.Error(err, "unable to fetch app")
+	} else {
+		instanceLog.Info(instance.Status.Status)
+	}
+
+	// updating the status
+	if instance.Status.Status == "" {
+		instance.Status.Status = "Running"
+		err := r.Status().Update(ctx, instance)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
