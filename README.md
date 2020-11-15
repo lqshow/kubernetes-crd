@@ -28,6 +28,7 @@ CRD 本身是一种 Kubernetes 内置的资源类型，是 CustomResourceDefinit
 ### 怎么实现 CRD 扩展？
 
 - 编写 CRD 并将其部署到 Kubernetes 集群里；
+
    这一步的作用就是让 Kubernetes 知道有这个资源及其结构属性，在用户提交该自定义资源的定义时（通常是 YAML 文件定义），Kubernetes 能够成功校验该资源并创建出对应的 Go struct 进行持久化，同时触发控制器的调谐逻辑。
 
 - 编写 Controller 并将其部署到 Kubernetes 集群里。
@@ -267,7 +268,7 @@ chmod +x ./script/install_kubebuilder.sh
         
         修复方法
         
-        在 CRD 结构体上加上以下注释 
+        在 CRD 结构体上加上以下注释, 在CRD定义中启用状态子资源 
         
         // +kubebuilder:subresource:status
         
@@ -277,6 +278,29 @@ chmod +x ./script/install_kubebuilder.sh
         // +kubebuilder:subresource:status
         // +kubebuilder:object:root=true
         ```
+		
+		```bash
+		# 修改后，执行以下命令，即可同步 crd spec yaml
+		make manifests
+		```
+		
+		```diff
+		diff --git a/config/crd/bases/runner.basebit.me_fuwus.yaml b/config/crd/bases/runner.basebit.me_fuwus.yaml
+		index 66a42cc..c3aab3e 100644
+		--- a/config/crd/bases/runner.basebit.me_fuwus.yaml
+		+++ b/config/crd/bases/runner.basebit.me_fuwus.yaml
+		@@ -15,6 +15,8 @@ spec:
+			 plural: fuwus
+			 singular: fuwu
+		   scope: Namespaced
+		+  subresources:
+		+    status: {}
+		   validation:
+			 openAPIV3Schema:
+			   description: Fuwu is the Schema for the fuwus API
+		```
+		
+		
 
 4. 安装 CRD
     ```bash
@@ -355,3 +379,5 @@ GVK -> Informer 的映射，Informer 包含 Reflector 和 Indexer 来做事件�
 ## References
 
 - [The Kubebuilder Book](https://book.kubebuilder.io/introduction.html)
+- [Status Subresource](https://book-v1.book.kubebuilder.io/basics/status_subresource.html)
+- [进阶 K8s 高级玩家必备 | Kubebuilder：让编写 CRD 变得更简单](https://mp.weixin.qq.com/s/UzEcj2eXKM0m8f4XzZCYAA)
