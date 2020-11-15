@@ -6,7 +6,7 @@ kubernetes 允许用户自定义自己的资源对象， 自定义资源 `CRD（
 
 ### 什么是 CRD？
 
-CRD 本身是一种 Kubernetes 内置的资源类型，是 CustomResourceDefinition 的缩写，可以通过 `kubectl get` 命令查看集群内定义的 CRD 资源。
+CRD 本身是一种 Kubernetes 内置的资源类型，是 CustomResourceDefinition 的缩写，可以通过 `kubectl get crd` 命令查看集群内定义的 CRD 资源。
 
 - 在 Kubernetes，所有的东西都叫做资源（Resource），就是 Yaml 里 Kind 那项所描述的
 
@@ -67,6 +67,68 @@ chmod +x ./script/install_kubebuilder.sh
     # 创建了一个 Go module 工程，同时创建了一些模板文件。
     kubebuilder init --domain basebit.me --repo github.com/lqshow/kubernetes-crd --owner "LQ"
     ```
+	
+	**Output**
+	```bash
+	Writing scaffold for you to edit...
+	Get controller runtime:
+	$ go get sigs.k8s.io/controller-runtime@v0.5.0
+	Update go.mod:
+	$ go mod tidy
+	Running make:
+	$ make
+	/Users/linqiong/workspace/app/golang/lib/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	go fmt ./...
+	go vet ./...
+	go build -o bin/manager main.go
+	Next: define a resource with:
+	$ kubebuilder create api
+	```
+	
+	**脚手架工程结构**
+	```bash
+	➜ tree
+	.
+	├── Dockerfile # Build Controller 镜像
+	├── Makefile # 用于构建和部署 controller
+	├── PROJECT # 用于创建新组件的 Kubebuilder 元数据
+	├── bin
+	│   └── manager # 编译后的可执行二进制文件
+	├── config
+	│   ├── certmanager
+	│   │   ├── certificate.yaml
+	│   │   ├── kustomization.yaml
+	│   │   └── kustomizeconfig.yaml
+	│   ├── default
+	│   │   ├── kustomization.yaml
+	│   │   ├── manager_auth_proxy_patch.yaml
+	│   │   ├── manager_webhook_patch.yaml
+	│   │   └── webhookcainjection_patch.yaml
+	│   ├── manager # 部署 Controller 的 manifest 文件
+	│   │   ├── kustomization.yaml
+	│   │   └── manager.yaml
+	│   ├── prometheus
+	│   │   ├── kustomization.yaml
+	│   │   └── monitor.yaml
+	│   ├── rbac # 运行 Controller 需要的 RBAC 权限
+	│   │   ├── auth_proxy_client_clusterrole.yaml
+	│   │   ├── auth_proxy_role.yaml
+	│   │   ├── auth_proxy_role_binding.yaml
+	│   │   ├── auth_proxy_service.yaml
+	│   │   ├── kustomization.yaml
+	│   │   ├── leader_election_role.yaml
+	│   │   ├── leader_election_role_binding.yaml
+	│   │   └── role_binding.yaml
+	│   └── webhook
+	│       ├── kustomization.yaml
+	│       ├── kustomizeconfig.yaml
+	│       └── service.yaml
+	├── go.mod
+	├── go.sum
+	├── hack
+	│   └── boilerplate.go.txt
+	└── main.go # Controller Entrypoint
+	```
     
 2. 创建新 API
     
@@ -75,10 +137,55 @@ chmod +x ./script/install_kubebuilder.sh
     kubebuilder create api --group runner --version v1alpha1 --kind App
     kubebuilder create api --group runner --version v1alpha1 --kind Fuwu
     ```
+	
+	**Output**
+	```bash
+	Create Resource [y/n]
+	y
+	Create Controller [y/n]
+	y
+	Writing scaffold for you to edit...
+	api/v1alpha1/app_types.go
+	controllers/app_controller.go
+	Running make:
+	$ make
+	/Users/linqiong/workspace/app/golang/lib/bin/controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	go fmt ./...
+	go vet ./...
+	go build -o bin/manager main.go
+	```
+	
+	**需要开发者关注的增量目录**
+	```bash
+	➜ tree  -I "hack|bin|webhook|rbac|prometheus|manager|default|certmanager|main.go|go.mod|go.sum|*file|PROJECT"
+	.
+	├── api
+	│   └── v1alpha1 # 自定义 CRD 目录（xx_types.go）
+	│       ├── app_types.go
+	│       ├── fuwu_types.go
+	│       ├── groupversion_info.go
+	│       └── zz_generated.deepcopy.go
+	├── config
+	│   ├── crd # 部署 CRD 的 manifest 文件
+	│   │   ├── kustomization.yaml
+	│   │   ├── kustomizeconfig.yaml
+	│   │   └── patches
+	│   │       ├── cainjection_in_apps.yaml
+	│   │       ├── cainjection_in_fuwus.yaml
+	│   │       ├── webhook_in_apps.yaml
+	│   │       └── webhook_in_fuwus.yaml
+	│   └── samples # CRD 样例 manifest 文件
+	│       ├── runner_v1alpha1_app.yaml
+	│       └── runner_v1alpha1_fuwu.yaml
+	└── controllers # 自定义 Controller 逻辑
+		├── app_controller.go
+		├── fuwu_controller.go
+		└── suite_test.go
+	```
     
-    查看生成的 yaml 文件
+    **查看生成的 sample yaml 文件**
     ```yaml
-   # cat config/samples/runner_v1alpha1_app.yaml
+    # cat config/samples/runner_v1alpha1_app.yaml
     apiVersion: runner.basebit.me/v1alpha1
     kind: App
     metadata:
@@ -87,45 +194,17 @@ chmod +x ./script/install_kubebuilder.sh
       # Add fields here
       foo: bar
     ```
-
-3. 安装 CRD
-    ```bash
-    # 安装 CRD
-    make install
- 
-    # 查看创建的 CRD
-    kubectl get crd apps.runner.basebit.me
-    kubectl get crd fuwus.runner.basebit.me
-    ```
     
-4. 本地启动 controller
+3. 定义 CRD
     
-    ```bash
-    # 启动 CRD controller
-    make run
-    ```
-    
-4. 部署 controller 到集群
-    
-    ```bash
-    # 构建镜像
-    make docker-build docker-push IMG=docker-reg.basebit.me:5000/base/runner-controller:v1alpha1
-    
-    # 部署到集群
-    make deploy IMG=docker-reg.basebit.me:5000/base/runner-controller:v1alpha1
-    ```
-    
-5. 定义 CRD
-    
-    主要关注 2 个文件
-    1. CRD 的定义文件
-    
-        ./api/v1alpha1/fuwu_types.go
-    2. CRD 控制器处理文件
-    
-        ./controllers/fuwu_controller.go
-    
-    * 修改 spec
+    **主要关注 2 个文件**
+    -  CRD 的定义文件
+        $(pwd)/api/v1alpha1/fuwu_types.go
+		> 这个文件包含了对 Fuwu 这个 CRD 的定义，开发者可以在里面添加修改 Spec 和 Status
+    -  CRD 控制器处理文件
+        $(pwd)/controllers/fuwu_controller.go
+        > 这个文件是控制器的处理逻辑，当集群中有 Fuwu 资源的变动（CRUD），都会触发 Reconcile 这个函数进行协调
+    * **修改 spec**
     
         ```go
         // FuwuSpec defines the desired state of Fuwu
@@ -198,7 +277,34 @@ chmod +x ./script/install_kubebuilder.sh
         // +kubebuilder:subresource:status
         // +kubebuilder:object:root=true
         ```
+
+4. 安装 CRD
+    ```bash
+    # 安装 CRD
+    make install
+ 
+    # 查看创建的 CRD
+    kubectl get crd apps.runner.basebit.me
+    kubectl get crd fuwus.runner.basebit.me
+    ```
     
+5. 本地启动 controller
+    
+    ```bash
+    # 启动 CRD controller
+    make run
+    ```
+    
+6. 部署 controller 到集群
+    
+    ```bash
+    # 构建镜像
+    make docker-build docker-push IMG=docker-reg.basebit.me:5000/base/runner-controller:v1alpha1
+    
+    # 部署到集群
+    make deploy IMG=docker-reg.basebit.me:5000/base/runner-controller:v1alpha1
+    ```
+	
 6. 创建一个 webhook
     
     > webhook server 需要 CA 证书
@@ -208,7 +314,8 @@ chmod +x ./script/install_kubebuilder.sh
     ```bash
     kubebuilder create webhook --group runner --version v1alpha1 --kind Fuwu --defaulting --programmatic-validation
     ```
-7. 安装自定义资源实例
+	
+7. 安装 Custom Resources 实例
 	```bash
 	kubectl apply -f config/samples/
 	
@@ -222,7 +329,7 @@ chmod +x ./script/install_kubebuilder.sh
 	app-sample   3m9s
 	```
 
-8. 卸载 CRD
+8. 卸载 CRDs
 	```bash
 	make uninstall
 	```	
