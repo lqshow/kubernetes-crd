@@ -20,6 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type AppTemplate struct {
+	Name string  `json:"name"`
+	Spec AppSpec `json:"spec,omitempty"`
+}
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -28,9 +33,8 @@ type FuwuSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Selector    string `json:"selector"`
+	Selector string `json:"selector"`
+	//Apps     []AppTemplate `json:"apps,omitempty"`
 }
 
 // FuwuStatus defines the observed state of Fuwu
@@ -38,12 +42,15 @@ type FuwuStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Status string `json:"status"`
+	Status        string `json:"status"`
+	Phase         string `json:"phase,omitempty"`
+	AvailableApps int32  `json:"availableApps,omitempty"`
+	TotalApps     int32  `json:"totalApps,omitempty"`
 }
 
 // +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
-// +kubebuilder:printcolumn:name="Description",type="string",JSONPath=".spec.description",description="The description of Fuwu"
+// +kubebuilder:printcolumn:name="Selector",type="string",JSONPath=".spec.Selector",description="The selector of Fuwu"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="The age of Fuwu"
 
 // Fuwu is the Schema for the fuwus API
@@ -55,7 +62,6 @@ type Fuwu struct {
 	Status FuwuStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
 
 // FuwuList contains a list of Fuwu

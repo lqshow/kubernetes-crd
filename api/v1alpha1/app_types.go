@@ -17,8 +17,25 @@ limitations under the License.
 package v1alpha1
 
 import (
+	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const (
+	PhasePending = "PENDING"
+	PhaseRunning = "RUNNING"
+	PhaseDone    = "DONE"
+)
+
+type AppNode struct {
+	Id string `json:"id"`
+	// +kubebuilder:default="app example"
+	Name string `json:"name"`
+
+	Template appsv1.DeploymentSpec `json:"template,omitempty"`
+
+	ParentIds []string `json:"parentIds,omitempty"`
+}
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -28,8 +45,7 @@ type AppSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of App. Edit App_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	AppNode AppNode `json:"appNode,omitempty"`
 }
 
 // AppStatus defines the observed state of App
@@ -37,7 +53,7 @@ type AppStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Status string `json:"status"`
+	Phase string `json:"phase,omitempty"`
 }
 
 // +kubebuilder:subresource:status
@@ -52,7 +68,6 @@ type App struct {
 	Status AppStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:subresource:status
 // +kubebuilder:object:root=true
 
 // AppList contains a list of App

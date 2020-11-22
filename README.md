@@ -376,6 +376,12 @@ GVK -> Informer 的映射，Informer 包含 Reflector 和 Indexer 来做事件�
 
 ### Implementing a controller
 
+Reconcile 监控多个资源
+
+Fuwu, App 
+
+
+
 ## References
 
 - [The Kubebuilder Book](https://book.kubebuilder.io/introduction.html)
